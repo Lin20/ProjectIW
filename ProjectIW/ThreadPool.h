@@ -5,6 +5,7 @@
 #include <mutex>
 #include <condition_variable>
 #include <vector>
+#include <atomic>
 
 #include "Task.h"
 
@@ -19,6 +20,7 @@ public:
 	inline bool IsActive() { return active; }
 
 	void AddTask(Task t);
+	void AddTaskBatch(std::vector<Task>& batch);
 	void ThreadWork();
 	void Quit();
 	void JoinAllAndAbort();
@@ -31,5 +33,5 @@ private:
 	mutex queue_mutex;
 	condition_variable condition;
 
-	bool active;
+	atomic<bool> active;
 };

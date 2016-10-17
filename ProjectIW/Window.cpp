@@ -16,6 +16,7 @@ Engine* engine;
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
+	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 	WNDCLASSEX wcex;
 
 	wcex.cbSize = sizeof(WNDCLASSEX);
@@ -57,10 +58,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	engine->Loop();
 	delete engine;
 
-
 #ifdef _DEBUG
 	//Print out any memory leaks
-	_CrtDumpMemoryLeaks();
+	//_CrtDumpMemoryLeaks();
 
 	CHAR s[500];
 	GetCurrentDirectory(500, s);

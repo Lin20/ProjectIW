@@ -86,6 +86,7 @@
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>D3D11.lib;d3dx11.lib;dinput8.lib;dxguid.lib;D3dcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <Profile>true</Profile>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -96,6 +97,7 @@
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <Profile>true</Profile>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -136,8 +138,13 @@
     <ClInclude Include="DirectInput.h" />
     <ClInclude Include="Engine.h" />
     <ClInclude Include="General.h" />
+    <ClInclude Include="GPUMesh.h" />
     <ClInclude Include="IBO.h" />
     <ClInclude Include="InputController.h" />
+    <ClInclude Include="LRUCache.hpp" />
+    <ClInclude Include="MeshGeneration.h" />
+    <ClInclude Include="NodeCache.h" />
+    <ClInclude Include="NodeCreation.h" />
     <ClInclude Include="Octree.h" />
     <ClInclude Include="OctreeNode.h" />
     <ClInclude Include="QEFSolver.h" />
@@ -159,6 +166,9 @@
     <ClInclude Include="Vertex.h" />
     <ClInclude Include="Window.h" />
     <ClInclude Include="WorldNode.h" />
+    <ClInclude Include="WorldProcessor.h" />
+    <ClInclude Include="WorldTree.h" />
+    <ClInclude Include="WorldTypes.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Box.cpp" />
@@ -166,8 +176,12 @@
     <ClCompile Include="ConstantsBuffer.cpp" />
     <ClCompile Include="DirectInput.cpp" />
     <ClCompile Include="Engine.cpp" />
+    <ClCompile Include="GPUMesh.cpp" />
     <ClCompile Include="IBO.cpp" />
     <ClCompile Include="InputController.cpp" />
+    <ClCompile Include="MeshGeneration.cpp" />
+    <ClCompile Include="NodeCache.cpp" />
+    <ClCompile Include="NodeCreation.cpp" />
     <ClCompile Include="Octree.cpp" />
     <ClCompile Include="OctreeNode.cpp" />
     <ClCompile Include="QEFSolver.cpp" />
@@ -188,9 +202,10 @@
     <ClCompile Include="Window.cpp" />
     <ClCompile Include="World.cpp" />
     <ClCompile Include="WorldNode.cpp" />
+    <ClCompile Include="WorldProcessor.cpp" />
+    <ClCompile Include="WorldTree.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="ClassDiagram.cd" />
     <None Include="SimpleMath.inl" />
     <None Include="Tables.h" />
   </ItemGroup>

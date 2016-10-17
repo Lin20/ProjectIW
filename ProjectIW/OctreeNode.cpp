@@ -12,7 +12,7 @@ namespace MDC
 			children[i] = 0;
 	}
 
-	OctreeNode::OctreeNode(XMINT3 position, unsigned short size, bool is_leaf, unsigned int scale) : position(position), size(size), is_leaf(is_leaf), vertices(0), corners(0), child_index(0), vertex_count(0), scale(scale)
+	OctreeNode::OctreeNode(XMINT3 position, unsigned short n_size, bool is_leaf, unsigned int n_scale) : position(position), size(n_size), is_leaf(is_leaf), vertices(0), corners(0), child_index(0), vertex_count(0), scale(n_scale)
 	{
 		for (int i = 0; i < 8; i++)
 			children[i] = 0;
@@ -41,7 +41,7 @@ namespace MDC
 			return ConstructLeaf();
 
 		is_leaf = false;
-		unsigned short child_size = size / 2;
+		unsigned int child_size = size / 2;
 		bool has_children = false;
 
 		OctreeNode temp_node;
@@ -139,6 +139,7 @@ namespace MDC
 				k++;
 			}
 
+			assert(k != 0);
 			mpos /= (float)k;
 			normal /= (float)k;
 			normal.Normalize();
@@ -474,6 +475,8 @@ namespace MDC
 			if (surface_set.size() == 0)
 				return;
 
+			if (this->vertices)
+				delete[] this->vertices;
 			this->vertices = new Vertex[surface_set.size()];
 			this->vertex_count = surface_set.size();
 

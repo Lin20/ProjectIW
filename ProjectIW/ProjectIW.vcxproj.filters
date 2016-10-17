@@ -22,6 +22,15 @@
     <Filter Include="Source Files\MDC">
       <UniqueIdentifier>{1a9f71bf-b612-4512-aeed-bdf202531f8d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\WorldPipeline">
+      <UniqueIdentifier>{97a7e532-877d-4f6e-86c2-a465588a9726}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\WorldPipeline">
+      <UniqueIdentifier>{73a99ee7-5aee-4ee5-a1bf-ddeca5237fb3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Utilities">
+      <UniqueIdentifier>{2eb2a3e7-c919-4dfb-8339-14ef4ac617b7}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Window.h">
@@ -111,6 +120,30 @@
     <ClInclude Include="Task.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="WorldTree.h">
+      <Filter>Header Files\WorldPipeline</Filter>
+    </ClInclude>
+    <ClInclude Include="WorldTypes.h">
+      <Filter>Header Files\WorldPipeline</Filter>
+    </ClInclude>
+    <ClInclude Include="NodeCache.h">
+      <Filter>Header Files\WorldPipeline</Filter>
+    </ClInclude>
+    <ClInclude Include="NodeCreation.h">
+      <Filter>Header Files\WorldPipeline</Filter>
+    </ClInclude>
+    <ClInclude Include="MeshGeneration.h">
+      <Filter>Header Files\WorldPipeline</Filter>
+    </ClInclude>
+    <ClInclude Include="WorldProcessor.h">
+      <Filter>Header Files\WorldPipeline</Filter>
+    </ClInclude>
+    <ClInclude Include="LRUCache.hpp">
+      <Filter>Header Files\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="GPUMesh.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Window.cpp">
@@ -194,6 +227,24 @@
     <ClCompile Include="ThreadPool.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="WorldTree.cpp">
+      <Filter>Source Files\WorldPipeline</Filter>
+    </ClCompile>
+    <ClCompile Include="NodeCreation.cpp">
+      <Filter>Source Files\WorldPipeline</Filter>
+    </ClCompile>
+    <ClCompile Include="MeshGeneration.cpp">
+      <Filter>Source Files\WorldPipeline</Filter>
+    </ClCompile>
+    <ClCompile Include="NodeCache.cpp">
+      <Filter>Source Files\WorldPipeline</Filter>
+    </ClCompile>
+    <ClCompile Include="WorldProcessor.cpp">
+      <Filter>Source Files\WorldPipeline</Filter>
+    </ClCompile>
+    <ClCompile Include="GPUMesh.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Tables.h">
@@ -202,7 +253,6 @@
     <None Include="SimpleMath.inl">
       <Filter>Header Files</Filter>
     </None>
-    <None Include="ClassDiagram.cd" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="VertexShader.hlsl">

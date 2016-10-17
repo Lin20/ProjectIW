@@ -1,11 +1,12 @@
 #include "TerrainChunk.h"
 #include "OctreeNode.h"
+#include "WorldTypes.h"
 
 namespace MDC
 {
 	TerrainChunk::TerrainChunk(XMINT3 pos, unsigned int scale)
 	{
-		octree = new OctreeNode(pos, 16, false, scale);
+		octree = new OctreeNode(pos, NODE_CHUNK_RESOLUTION, false, scale);
 		vbo = 0;
 		ibo = 0;
 		empty = false;
@@ -65,6 +66,12 @@ namespace MDC
 			}
 		}
 		tri_count = indexes.size();
+
+		if (octree)
+		{
+			delete octree;
+			octree = 0;
+		}
 
 		return (unsigned int)(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start)).count();
 	}

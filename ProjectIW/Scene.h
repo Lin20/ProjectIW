@@ -9,6 +9,7 @@
 #include "General.h"
 #include "SimpleMath.h"
 #include "ThreadPool.h"
+#include "WorldProcessor.h"
 
 using namespace MDC;
 using namespace DirectX::SimpleMath;
@@ -27,25 +28,11 @@ public:
 
 private:
 	bool SetupShaders();
-	void UpdateTree();
-	bool NodeNeedsSplit(WorldNode* n, Vector3& center);
-	bool NodeNeedsGroup(WorldNode* n, Vector3& center);
-	void ProcessInitQueue();
-	void Scene::ProcessDeleteQueue();
+	void UpdateWorld();
 
 	ShaderGroup* terrain_shaders;
 	Camera* camera;
 	Vector3 last_update_pos;
 
-	WorldNode* base_tree;
-	std::vector<TerrainChunk*> chunks;
-
-	bool active;
-	ThreadPool* thread_pool;
-	std::mutex init_lock;
-	std::mutex delete_lock;
-	std::thread init_thread;
-	std::thread delete_thread;
-	std::vector<WorldNode*> init_queue;
-	std::vector<WorldNode*> delete_queue;
+	WorldProcessor world;
 };

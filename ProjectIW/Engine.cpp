@@ -35,7 +35,7 @@ void Engine::Loop()
 		}
 		else
 		{
-			SetCursorPos(400, 400);
+			//SetCursorPos(400, 400);
 			input->UpdateMousePosition();
 			input->Update();
 			rendering->Render();

@@ -40,7 +40,7 @@ namespace MDC
 
 		XMINT3 position;
 		int scale;
-		short size;
+		int size;
 		unsigned char child_index;
 		bool is_leaf;
 		unsigned char corners;

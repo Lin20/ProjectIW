@@ -2,9 +2,18 @@
 #include "SimplexNoise.h"
 #include <complex>
 
-#define USE_FRACTAL_2D false
-#define USE_FRACTAL_3D true
-#define USE_FRACTAL_SPHERE false
+#define USE_PLANE 0
+#define USE_SPHERE 1
+#define USE_FRACTAL_2D 2
+#define USE_FRACTAL_3D 3
+#define USE_FRACTAL_SPHERE 4
+#define USE_HEIGHTMAP 5
+
+float World::global_size = 0.0f;
+float World::global_size_inverse = 0.0f;
+int World::sample_type = USE_HEIGHTMAP;
+float World::terrain_scale = 0.0005f;
+float World::terrain_height = 1024.0f;
 
 float fractal(double x, double y, int* out_iterations)
 {
@@ -43,7 +52,7 @@ void hypercomplex_multiply2(float& x, float& y, float& z)
 	if (x == 0 && y == 0 && z == 0)
 		return;
 	float p = sqrt(x*x + y*y);
-	float a = 1.0 - z*z / p*p;
+	float a = 1.0f - z*z / p*p;
 	float newx = a * (x*x - y*y);
 	float newy = a * (x*y + x*y);
 	float newz = p*z + p*z;
@@ -90,7 +99,7 @@ void hypercomplex_multiply4(float p, float& x, float& y, float& z, float zr0, fl
 	z = zr * sinf(zo);
 }
 
-float fractal(float init_x, float init_y, float init_z, int* out_iterations, int max_iterations = 8)
+float fractal(float init_x, float init_y, float init_z, int* out_iterations, int max_iterations = 12)
 {
 	using namespace std::complex_literals;
 
@@ -103,15 +112,15 @@ float fractal(float init_x, float init_y, float init_z, int* out_iterations, int
 	const int clr_iterations = 2;
 	const float bailout = 4.0f;
 
-	for (int i = 0; i < max_iterations; i++) 
+	for (int i = 0; i < max_iterations; i++)
 	{
-		hypercomplex_multiply2(z_x, z_y, z_z);
-		//hypercomplex_multiply3(z_x, z_y, z_z, 8);
+		//hypercomplex_multiply2(z_x, z_y, z_z);
+		hypercomplex_multiply3(z_x, z_y, z_z, 8);
 		//hypercomplex_multiply4(power, z_x, z_y, z_z, r, dr);
 		z_x += init_x;
 		z_y += init_y;
 		z_z += init_z;
-		
+
 		r = sqrtf(z_x*z_x + z_y*z_y + z_z*z_z);
 
 		if (r > bailout)
@@ -177,64 +186,41 @@ float World::Sample(Vector3 pos, int scale)
 
 float World::Sample(float x, float y, float z, int level)
 {
-	//return Sphere(x, y, z);
-	//return Cube(x, y, z);
-	/*if (y < 1)
-		return -1;
-	return 1;*/
-	//float scaley = 1.0f * 16.0f;
-	//return y - Noise(x, 0, z) * scaley - scaley;
-	//float n = Noise(x, y, z, 0.005f, 2);
-	//return n;
-	//return y - (Noise(x, 0, z) + n) * 16.0f - 16.0f;
-	//return Cube(x / range, y / range, z / range);
+	float dx, dy, dz, n;
 
-	//float rocks = Noise(x, y, z, 0.1f, 4) * 0.5f;
-	//int octaves = max(1, (256 - scale) / 4);
-	//float base = y / range * 4.0f - Noise(x, z, 1.0f / range, 16);
-	//float true_scale = powf(2, (float)scale);
-	//float base = Noise(x, z, 1 / range * scale, 1);
-	//base = y / range * 4.0f - base;
-	/*if(scale <= 8)
-		base += Noise(x + 80000.0f, y + 80000.0f, z + 80000.0f, 1.0f / range * 8.0f, 1) / 2.0f;
-	if(scale <= 4)
-		base += Noise(x + 40000.0f, y + 40000.0f, z + 40000.0f, 1.0f / range * 16.0f, 1) / 4.0f;
-	if (scale <= 2)
-		base += Noise(x + 20000.0f, y + 20000.0f, z + 20000.0f, 1.0f / range * 32.0f, 1) / 8.0f*/
-
-	if (USE_FRACTAL_2D)
+	switch (sample_type)
 	{
-		const double range = pow(2.0, 22);
+	case USE_PLANE:
+		return y;
+
+	case USE_SPHERE:
+		return Sphere(x, y, z);
+
+	case USE_FRACTAL_2D:
 		if (y < 0 || y > 0)
 			return 1;
-		//x /= range; y /= range; z /= range;
-		double dx = (double)x / (double)range;
-		double dz = (double)z / (double)range;
+		dx = x / global_size;
+		dz = z / global_size;
 		return fractal(dx, dz, 0);
 
-		const float a = 0.2f;
-		const float b = 0.2f;
-		float new_x = 2.0f * x * x - 3 * a * b * y + a;
-		float new_y = 3.0f * y * y + 2 * a * b * x - b;
-		return y / range * 4.0f - Noise(new_x, new_y, 1.0f, 1);
-	}
-	else if (USE_FRACTAL_3D)
-	{
-		const float range = pow(2.0, 8);
-		//x /= range; y /= range; z /= range;
-		float dx = x / range;
-		float dy = y / range;
-		float dz = z / range;
+	case USE_FRACTAL_3D:
+		dx = x / global_size;
+		dy = y / global_size;
+		dz = z / global_size;
 		return fractal(dx, dy, dz, 0);
-	}
-	else if (USE_FRACTAL_SPHERE)
-	{
-		const float range = pow(2.0, 6);
-		//x /= range; y /= range; z /= range;
-		float dx = x / range;
-		float dy = y / range;
-		float dz = z / range;
+
+	case USE_FRACTAL_SPHERE:
+		dx = x / global_size;
+		dy = y / global_size;
+		dz = z / global_size;
 		return fractal_sphere(dx, dy, dz, 0);
+
+	case USE_HEIGHTMAP:
+		n = Noise(x, z, terrain_scale, 4);
+		return y - n * terrain_height - terrain_height * 0.5f;
+
+	default: // plane
+		return y;
 	}
 
 	float scale = 65535.0f;
@@ -254,6 +240,32 @@ float World::Sample(float x, float y, float z, int level)
 	//return y - Noise(x, y, z, 0.01f, 4) * 128.0f - 64.0f;
 
 	return SimplexNoise::GenerateSimplexNoise(x, y, z);
+
+	//return y;
+	//return Sphere(x, y, z);
+	//return Cube(x, y, z);
+	//if (y < 1)
+	//	return -1;
+	//return 1;
+	//float scaley = 1.0f * 16.0f;
+	//return y - Noise(x, 0, z) * scaley - scaley;
+	//float n = Noise(x, y, z, 0.005f, 2);
+	//return n;
+	//return y - (Noise(x, 0, z) + n) * 16.0f - 16.0f;
+	//return Cube(x / range, y / range, z / range);
+
+	//float rocks = Noise(x, y, z, 0.1f, 4) * 0.5f;
+	//int octaves = max(1, (256 - scale) / 4);
+	//float base = y / range * 4.0f - Noise(x, z, 1.0f / range, 16);
+	//float true_scale = powf(2, (float)scale);
+	//float base = Noise(x, z, 1 / range * scale, 1);
+	//base = y / range * 4.0f - base;
+	/*if(scale <= 8)
+		base += Noise(x + 80000.0f, y + 80000.0f, z + 80000.0f, 1.0f / range * 8.0f, 1) / 2.0f;
+	if(scale <= 4)
+		base += Noise(x + 40000.0f, y + 40000.0f, z + 40000.0f, 1.0f / range * 16.0f, 1) / 4.0f;
+	if (scale <= 2)
+		base += Noise(x + 20000.0f, y + 20000.0f, z + 20000.0f, 1.0f / range * 32.0f, 1) / 8.0f*/
 }
 
 
@@ -300,17 +312,23 @@ float World::Noise(float x, float z, float scale, int octaves)
 
 float World::Sphere(float x, float y, float z)
 {
-	const float r = 50.0f;
-	Vector3 v(x, y, z);
-	Vector3 o(0, 0, 0);
-	return (v - o).LengthSquared() - r *r;
+	const float r = global_size / 2.0f;
+	float origin[3] = { 0, 0, 0 };
+	float dx = x - origin[0];
+	float dy = y - origin[1];
+	float dz = z - origin[2];
+
+	return dx*dx + dy*dy + dz*dz - r*r;
+	//Vector3 v(x, y, z);
+	//Vector3 o(0, 0, 0);
+	//return (v - o).LengthSquared() - r *r;
 }
 
 float World::Cube(float x, float y, float z)
 {
-	const float r = 10.0f;
-	Vector3 pos(x, y, z);
-	Vector3 o(16, 16, 16);
+	const float r = 224288.0f;
+	Vector3 pos(x + r, y + r, z + r);
+	Vector3 o(r, r, r);
 	Vector3 local = pos - o;
 	Vector3 d = Vector3(abs(local.x), abs(local.y), abs(local.z)) - o;
 	float m = max(d.x, max(d.y, d.z));
@@ -363,7 +381,12 @@ Vector3 World::GetIntersection(const Vector3 pt0, const Vector3 pt1, int quality
 Vector3 World::GetNormal(Vector3 v, int scale)
 {
 	/* A smaller h than this causes normals to have issues */
-	float h = 0.001f;
+	if (sample_type == USE_SPHERE)
+	{
+		v.Normalize();
+		return v;
+	}
+	float h = 0.1f;
 	/*if (ImageData != null)
 	{
 		v = new Vector3((int)Math.Round(v.X), (int)Math.Round(v.Y), (int)Math.Round(v.Z));

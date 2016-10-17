@@ -1,15 +1,13 @@
 #include "WorldNode.h"
+#include "NodeCache.h"
 
 WorldNode::WorldNode() : WorldNode(1, XMINT3(0, 0, 0))
 {
 }
 
-WorldNode::WorldNode(unsigned int size, XMINT3 pos) : size(size), position(pos), underlying_chunk(0), parent(0), is_leaf(true), garbage(false), initialized(false), is_empty(false), in_init_queue(false), in_delete_queue(false)
+WorldNode::WorldNode(unsigned int size, XMINT3 pos)
 {
-	initialized = false;
-	in_delete_queue = false;
-	for (int i = 0; i < 8; i++)
-		children[i] = 0;
+	Initialize(size, pos);
 }
 
 WorldNode::~WorldNode()
@@ -18,79 +16,121 @@ WorldNode::~WorldNode()
 	//	SDELETEARRAY(children, 8);
 
 	SDELETE(underlying_chunk);
+	for (size_t i = 0; i < 8; i++)
+	{
+		assert(children[i] == 0);
+	}
+}
+
+void WorldNode::Initialize(unsigned int size, XMINT3 pos)
+{
+	this->node_stage = 0;
+	this->size = size;
+	this->position = pos;
+	this->underlying_chunk = 0;
+	this->parent = 0;
+	this->is_leaf = true;
+	this->is_empty = false;
+	this->is_active = false;
+	this->grouped_children = false;
+	this->request_abandon = false;
+	for (int i = 0; i < 8; i++)
+		children[i] = 0;
+}
+
+int64_t WorldNode::Hash()
+{
+	return Hash(position, size);
+}
+
+int64_t WorldNode::Hash(XMINT3 position, unsigned int size)
+{
+	assert(sizeof(double) == sizeof(int64_t));
+
+	float c_x = (float)position.x + 1.0f / (float)size;
+	float c_y = (float)position.y + 1.0f / (float)size;
+	float c_z = (float)position.z + 1.0f / (float)size;
+
+	const float p1 = 73856093.0f;
+	const float p2 = 19349663.0f;
+	const float p3 = 83492791.0f;
+
+	double a = c_x * p1;
+	double b = c_y * p2;
+	double c = c_z * p3;
+
+	int64_t i = *reinterpret_cast<int64_t*>(&a);
+	int64_t j = *reinterpret_cast<int64_t*>(&b);
+	int64_t k = *reinterpret_cast<int64_t*>(&c);
+
+	return i ^ j ^ k;
 }
 
 void WorldNode::SetAsLeaf()
 {
-	is_leaf = true;
-	if (underlying_chunk || in_delete_queue)
-	{
-		initialized = true;
-		return;
-	}
-
-	unsigned int scale = (unsigned int)log2(size / 16);
-	unsigned int mul = (unsigned int)pow(2, scale);
-	underlying_chunk = new TerrainChunk(position, mul);
-	underlying_chunk->GenerateOctree();
-	underlying_chunk->GenerateMesh();
-	is_empty = underlying_chunk->IsEmpty();
-	initialized = true;
 }
 
-void WorldNode::Divide(Vector3 center, bool recursive)
+void WorldNode::Divide(NodeCache* cache)
 {
-	initialized = true;
-	//SDELETE(underlying_chunk);
 	is_leaf = false;
+
 	int child_size = size / 2;
+	WorldNode* child_pool = 0;
+
+	bool cached_found = false;
+	for (size_t i = 0; i < 8; i++)
+	{
+		XMINT3 child_pos = XMINT3(position.x + i / 4 * child_size, position.y + i % 4 / 2 * child_size, position.z + i % 2 * child_size);
+		WorldNode* cached_node = cache->Find(Hash(child_pos, child_size), child_pos, child_size);
+		if (cached_node)
+		{
+			// If we found the cached node, just assign it. There's no need to process it further because it's either being processed in the pipeline already, or it's ready.
+			cached_node->request_abandon = false;
+			cached_node->parent = this;
+			children[i] = cached_node;
+			cached_found = true;
+		}
+	}
+
+	if (!cached_found)
+	{
+		//child_pool = new WorldNode[8];
+		//this->grouped_children = true;
+	}
+
 	for (int i = 0; i < 8; i++)
 	{
-		//SDELETE(children[i]);
-		XMINT3 child_pos = XMINT3(position.x + i / 4 * child_size, position.y + i % 4 / 2 * child_size, position.z + i % 2 * child_size);
-		children[i] = new WorldNode(child_size, child_pos);
-		children[i]->parent = this;
-
-		Vector3 child_center = Vector3(child_pos.x + child_size / 2, child_pos.y + child_size / 2, child_pos.z + child_size / 2);
-		child_center -= center;
-		float distance = child_center.Length();
-		if (recursive && child_size > 16 && distance / (float)child_size < 1.0f)
+		if (children[i])
 		{
-			children[i]->Divide(center);
+			children[i]->parent = this;
+			assert(children[i]->GetStage() != 0);
+			continue;
+		}
+
+		XMINT3 child_pos = XMINT3(position.x + i / 4 * child_size, position.y + i % 4 / 2 * child_size, position.z + i % 2 * child_size);
+
+		if (!cached_found)
+		{
+			// We set the node stage to CREATION here to ensure the node doesn't divide before having its set to generate.
+			WorldNode* child = new WorldNode(child_size, child_pos);
+			child->node_stage = NODE_STAGE_CREATION;
+			child->parent = this;
+			children[i] = child;
+			//children[i] = child_pool + i;
 		}
 		else
 		{
-			//children[i]->SetAsLeaf();
+			WorldNode* child = new WorldNode(child_size, child_pos);
+			child->node_stage = NODE_STAGE_CREATION;
+			child->parent = this;
+			children[i] = child;
 		}
 	}
 }
 
-bool WorldNode::Group(Vector3 center, bool recursive)
+bool WorldNode::Group()
 {
-	int child_size = size / 2;
-	Vector3 this_center = Vector3(position.x + child_size, position.y + child_size, position.z + child_size);
-	this_center -= center;
-	float distance = this_center.Length();
-	if (distance / (float)child_size >= 1.0f)
-	{
-		bool is_leaf = IsLeaf();
-		if (!is_leaf)
-		{
-			DeleteChildren();
-		}
-		else
-			SDELETE(underlying_chunk);
-		if ((is_leaf && parent) || (recursive && parent))
-		{
-			if (!parent->Group(center, recursive))
-			{
-				SetAsLeaf();
-			}
-		}
-
-		return true;
-	}
-
+	is_leaf = true;
 	return false;
 }
 
